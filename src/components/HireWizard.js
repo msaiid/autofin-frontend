@@ -12,7 +12,7 @@ const HireWizard = () => {
   const [sigPad, setSigPad] = useState(null);
   const [preview, setPreview] = useState(null);
   const canvasRef = useRef(null);
-  const { control, handleSubmit, setValue, getValues, formState: { errors } } = useForm({
+  const { control, handleSubmit, setValue, formState: { errors } } = useForm({
     defaultValues: {
       code: '',
       employmentType: '',

@@ -73,7 +73,7 @@ const HireWizard = () => {
         const formData = new FormData();
         Object.entries(data).forEach(([key, value]) => formData.append(key, value));
         try {
-          const response = await axios.post('http://localhost:5000/generate-docs', formData, {
+          const response = await axios.post('https://4369273ea1d4.ngrok-free.app/generate-docs', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
             responseType: 'blob' // Ожидаем бинарные данные (ZIP)
           });

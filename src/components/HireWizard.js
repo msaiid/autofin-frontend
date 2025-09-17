@@ -103,7 +103,13 @@ const HireWizard = () => {
   const clearSignature = () => sigPad.clear();
 
   return (
+
+    <div >
+
+      <img src="/logo.png" alt="AutoFin Logo" style={{ display: 'block', margin: '10px auto', maxWidth: '200px',borderRadius:'15px' }} />
+
     <Box sx={{ maxWidth: 600, mx: 'auto', p: 2 }}>
+
       <Typography variant="h4" gutterBottom>Принять на работу</Typography>
       <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
         {steps.map((label) => (
@@ -340,6 +346,7 @@ const HireWizard = () => {
       </form>
       <canvas ref={canvasRef} style={{ display: 'none' }} />
     </Box>
+    </div>
   );
 };
 

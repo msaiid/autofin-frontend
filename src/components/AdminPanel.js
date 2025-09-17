@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, AppBar, Toolbar, Drawer, List, ListItemButton, ListItemText, Collapse, IconButton, Table, TableBody, TableCell, TableHead, TableRow, Button, TextField, Select, MenuItem, FormControl, InputLabel, Switch } from '@mui/material';
+import { Box, Typography, AppBar, Toolbar, Drawer, List, ListItemButton, ListItemText, Collapse, Table, TableBody, TableCell, TableHead, TableRow, Button, TextField, Select, MenuItem, FormControl, InputLabel, Switch } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import Dropzone from 'react-dropzone';
@@ -21,7 +21,7 @@ const AdminPanel = () => {
     reports: false,
   });
 
-  const [selectedSection, setSelectedSection] = useState(null);
+  const [ setSelectedSection] = useState(null);
   const [selectedSubSection, setSelectedSubSection] = useState(null);
   const [preview, setPreview] = useState(null);
   const [sigPad, setSigPad] = useState(null);

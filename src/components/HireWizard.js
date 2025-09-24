@@ -16,9 +16,9 @@ const HireWizard = () => {
     defaultValues: {
       code: '',
       employmentType: '',
-      passportNumber: 'A01015545',
-      passportExpiry: '1990-01-01', // Тестовая дата рождения
-      fio: 'Иван Иванов Иванович',
+      passportNumber: '',
+      passportExpiry: '',
+      fio: '',
       hireDate: '',
       workplace: '',
       position: '',
@@ -27,68 +27,93 @@ const HireWizard = () => {
     }
   });
 
-  // Mock проверки кода
   const validateCode = (code) => code === '12345' ? { status: 'success', message: 'Добро пожаловать в ООО «Автофин»!' } : { status: 'error', message: 'Неверный код' };
 
-  // Проверка документов
   const validateDoc = (data) => {
     if (!/^A\d{7,8}$/.test(data.passportNumber)) return { status: 'error', message: 'Неверный формат номера паспорта (A + цифры)' };
     if (data.fio.length < 5) return { status: 'error', message: 'ФИО слишком короткое' };
     return { status: 'success', message: 'Данные приняты' };
   };
 
-  const handleFileDrop = (files) => {
-    const file = files[0];
+  const handleFileDrop = async (acceptedFiles) => {
+    const file = acceptedFiles[0];
     if (file) {
       setPreview(URL.createObjectURL(file));
-      // Автоматически заполняем тестовые данные при загрузке любого фото
-      setValue('fio', 'Иван Иванов Иванович');
-      setValue('passportNumber', 'A01015545');
-      setValue('passportExpiry', '1990-01-01'); // Тестовая дата рождения
-      alert('Тестовые данные заполнены: ФИО - Иван Иванов Иванович, Паспорт - A01015545, Дата рождения - 01.01.1990');
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        console.log('Отправка запроса на:', 'https://d41c36794c48.ngrok-free.app/upload'); // Обновленный URL
+        const response = await axios.post('https://d41c36794c48.ngrok-free.app/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 20000, // Увеличен тайм-аут до 20 секунд
+        });
+        console.log('Статус ответа:', response.status);
+        console.log('Данные ответа:', response.data);
+        const { full_fio, passport_number, birth_date } = response.data;
+        if (full_fio === 'Не найдено' || passport_number === 'Не найдено' || birth_date === 'Не найдено') {
+          alert('Не удалось распознать данные с фото. Убедитесь, что фото четкое и содержит все поля.');
+          setValue('fio', '');
+          setValue('passportNumber', '');
+          setValue('passportExpiry', '');
+        } else {
+          setValue('fio', full_fio);
+          setValue('passportNumber', passport_number);
+          const [day, month, year] = birth_date.split('.');
+          const formattedDate = `${year}-${month}-${day}`;
+          setValue('passportExpiry', formattedDate);
+        }
+      } catch (error) {
+        console.error('Ошибка обработки фото:', error);
+        console.error('Детали ошибки:', error.response ? error.response.data : error.message);
+        alert('Ошибка при обработке фото. Проверьте сервер или качество изображения. См. консоль для деталей.');
+        setValue('fio', '');
+        setValue('passportNumber', '');
+        setValue('passportExpiry', '');
+      }
     }
   };
 
   const onSubmit = async (data) => {
     if (activeStep === 0) {
-      if (errors.code) return; // Проверка валидации
+      if (errors.code) return;
       const result = validateCode(data.code);
       alert(result.message);
       if (result.status === 'success') setActiveStep(1);
     } else if (activeStep === 1) {
-      if (errors.employmentType) return; // Проверка валидации
+      if (errors.employmentType) return;
       setActiveStep(2);
     } else if (activeStep === 2) {
-      if (errors.fio || errors.passportNumber || errors.passportExpiry) return; // Проверка валидации
+      if (errors.fio || errors.passportNumber || errors.passportExpiry) return;
       const result = validateDoc(data);
       alert(result.message);
       if (result.status === 'success') setActiveStep(3);
     } else if (activeStep === 3) {
-      if (errors.hireDate || errors.workplace || errors.position || errors.rate || errors.salary) return; // Проверка валидации
+      if (errors.hireDate || errors.workplace || errors.position || errors.rate || errors.salary) return;
       setActiveStep(4);
     } else if (activeStep === 4) {
       if (!sigPad.isEmpty()) {
         setActiveStep(5);
-        // Отправка данных на сервер для генерации и скачивания .docx файлов
         const formData = new FormData();
         Object.entries(data).forEach(([key, value]) => formData.append(key, value));
         try {
-          const response = await axios.post('https://4369273ea1d4.ngrok-free.app/generate-docs', formData, {
+          const response = await axios.post('https://d41c36794c48.ngrok-free.app/generate-contract', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
-            responseType: 'blob' // Ожидаем бинарные данные (ZIP)
+            responseType: 'blob',
+            timeout: 20000, // Увеличен тайм-аут
           });
           const url = window.URL.createObjectURL(new Blob([response.data]));
           const link = document.createElement('a');
           link.href = url;
-          link.setAttribute('download', 'documents.zip');
+          link.setAttribute('download', 'Трудовой_контракт.docx');
           document.body.appendChild(link);
           link.click();
           link.remove();
           window.URL.revokeObjectURL(url);
-          alert('Документы скачаны: documents.zip (содержит Образец приёма на работу.docx и Трудовой контракт.docx)');
+          alert('Трудовой контракт скачан с обновленными данными!');
         } catch (error) {
-          console.error('Ошибка при генерации документов:', error);
-          alert('Ошибка при генерации документов. Убедитесь, что сервер запущен.');
+          console.error('Ошибка при генерации контракта:', error);
+          alert('Ошибка при генерации контракта. Проверьте консоль.');
         }
       } else {
         alert('Подпишите заявление');
@@ -103,13 +128,8 @@ const HireWizard = () => {
   const clearSignature = () => sigPad.clear();
 
   return (
-
-    <div >
-
-      <img src="/logo.png" alt="AutoFin Logo" style={{ display: 'block', margin: '10px auto', maxWidth: '200px',borderRadius:'15px' }} />
-
     <Box sx={{ maxWidth: 600, mx: 'auto', p: 2 }}>
-
+      <img src="/logo.png" alt="AutoFin Logo" style={{ display: 'block', margin: '10px auto', maxWidth: '200px', borderRadius: '15px' }} />
       <Typography variant="h4" gutterBottom>Принять на работу</Typography>
       <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
         {steps.map((label) => (
@@ -159,12 +179,12 @@ const HireWizard = () => {
         )}
         {activeStep === 2 && (
           <Box>
-            <Typography variant="h6">Загрузите личную сторону паспорта (для тестовых данных)</Typography>
+            <Typography variant="h6">Загрузите личную сторону паспорта</Typography>
             <Dropzone onDrop={handleFileDrop} accept={{ 'image/*': ['.jpg', '.jpeg', '.png'] }}>
               {({ getRootProps, getInputProps }) => (
-                <Box {...getRootProps()} sx={{ border: '1px dashed grey', p: 2, mb: 2, textAlign: 'center' }}>
-                  <input {...getInputProps()} capture="environment" />
-                  <Typography>Перетащите фото паспорта или кликните (тестовые данные заполнятся автоматически)</Typography>
+                <Box {...getRootProps()} sx={{ border: '1px dashed grey', p: 2, mb: 2, textAlign: 'center', cursor: 'pointer' }}>
+                  <input {...getInputProps()} />
+                  <Typography>Перетащите фото паспорта или кликните для загрузки</Typography>
                 </Box>
               )}
             </Dropzone>
@@ -219,7 +239,7 @@ const HireWizard = () => {
                 />
               )}
             />
-            <Button onClick={() => { setPreview(null); setValue('fio', 'Иван Иванов Иванович'); setValue('passportNumber', 'A01015545'); setValue('passportExpiry', '1990-01-01'); }} sx={{ mt: 1 }}>Очистить и восстановить тестовые данные</Button>
+            <Button onClick={() => { setPreview(null); setValue('fio', ''); setValue('passportNumber', ''); setValue('passportExpiry', ''); }} sx={{ mt: 1 }}>Очистить данные</Button>
           </Box>
         )}
         {activeStep === 3 && (
@@ -346,7 +366,6 @@ const HireWizard = () => {
       </form>
       <canvas ref={canvasRef} style={{ display: 'none' }} />
     </Box>
-    </div>
   );
 };
 

@@ -21,7 +21,6 @@ const AdminPanel = () => {
     reports: false,
   });
 
-  const [ setSelectedSection] = useState(null);
   const [selectedSubSection, setSelectedSubSection] = useState(null);
   const [preview, setPreview] = useState(null);
   const [sigPad, setSigPad] = useState(null);

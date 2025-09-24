@@ -43,25 +43,22 @@ const HireWizard = () => {
       formData.append('file', file);
 
       try {
-        console.log('Отправка запроса на:', 'https://d41c36794c48.ngrok-free.app/upload'); // Обновленный URL
+        console.log('Отправка запроса на:', 'https://d41c36794c48.ngrok-free.app/upload');
         const response = await axios.post('https://d41c36794c48.ngrok-free.app/upload', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
-          timeout: 20000, // Увеличен тайм-аут до 20 секунд
+          timeout: 20000,
         });
         console.log('Статус ответа:', response.status);
         console.log('Данные ответа:', response.data);
         const { full_fio, passport_number, birth_date } = response.data;
-        if (full_fio === 'Не найдено' || passport_number === 'Не найдено' || birth_date === 'Не найдено') {
-          alert('Не удалось распознать данные с фото. Убедитесь, что фото четкое и содержит все поля.');
-          setValue('fio', '');
-          setValue('passportNumber', '');
-          setValue('passportExpiry', '');
-        } else {
-          setValue('fio', full_fio);
-          setValue('passportNumber', passport_number);
+        setValue('fio', full_fio !== 'Не найдено' ? full_fio : '');
+        setValue('passportNumber', passport_number !== 'Не найдено' ? passport_number : '');
+        if (birth_date !== 'Не найдено') {
           const [day, month, year] = birth_date.split('.');
           const formattedDate = `${year}-${month}-${day}`;
           setValue('passportExpiry', formattedDate);
+        } else {
+          setValue('passportExpiry', '');
         }
       } catch (error) {
         console.error('Ошибка обработки фото:', error);
@@ -100,7 +97,7 @@ const HireWizard = () => {
           const response = await axios.post('https://d41c36794c48.ngrok-free.app/generate-contract', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
             responseType: 'blob',
-            timeout: 20000, // Увеличен тайм-аут
+            timeout: 20000,
           });
           const url = window.URL.createObjectURL(new Blob([response.data]));
           const link = document.createElement('a');
@@ -199,7 +196,6 @@ const HireWizard = () => {
                   label="ФИО (Насаб Ном Номи падар)"
                   fullWidth
                   margin="normal"
-                  disabled
                   error={!!errors.fio}
                   helperText={errors.fio?.message}
                 />
@@ -215,7 +211,6 @@ const HireWizard = () => {
                   label="Номер паспорта (A + цифры)"
                   fullWidth
                   margin="normal"
-                  disabled
                   error={!!errors.passportNumber}
                   helperText={errors.passportNumber?.message}
                 />
@@ -233,7 +228,6 @@ const HireWizard = () => {
                   fullWidth
                   margin="normal"
                   InputLabelProps={{ shrink: true }}
-                  disabled
                   error={!!errors.passportExpiry}
                   helperText={errors.passportExpiry?.message}
                 />
@@ -254,7 +248,6 @@ const HireWizard = () => {
                   label="ФИО"
                   fullWidth
                   margin="normal"
-                  disabled
                   error={!!errors.fio}
                   helperText={errors.fio?.message}
                 />
